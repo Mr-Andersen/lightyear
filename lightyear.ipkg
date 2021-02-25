@@ -1,0 +1,11 @@
+package lightyear-1_0_0
+
+sourcedir   = "src"
+
+modules     = Lightyear
+            , Lightyear.Char
+            , Lightyear.Combinators
+            , Lightyear.Core
+            , Lightyear.Position
+            , Lightyear.Strings
+            , Lightyear.Testing
