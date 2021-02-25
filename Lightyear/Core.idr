@@ -14,11 +14,12 @@ import Lightyear.Position
 
 import Debug.Trace
 
-%access public export
+-- %access public export
 
 namespace Lightyear.State
 
   ||| State to keep track off during parsing.
+  public export
   record State (str : Type) where
     constructor ST
     input     : str
@@ -28,28 +29,34 @@ namespace Lightyear.State
 namespace Lightyear.Error
 
   ||| Error messages to return.
+  public export
   record Error str where
     constructor Err
     position : Position
     msg : String
 
-  display : Error str -> String
+  export
+  display : {0 str : Type} -> Error str -> String
   display (Err pos msg) = concat [display pos,":\n\t", msg]
 
+public export
 data Result : (str : Type) -> (a : Type) -> Type where
   Success : a -> Result str a
   Failure : List (Error str) -> Result str a
 
+public export
 Functor (Result str) where
   map f (Success x)  = Success (f x)
   map f (Failure es) = Failure es
 
+public export
 data Reply : (str : Type) -> (a : Type) -> Type where
   MkReply : State str -> Result str a -> Reply str a
 
+public export
 record ParserT (str : Type) (m : Type -> Type) a where
   constructor PT
-  runParserT : (r : Type)
+  runParserT : (0 r : Type)
             -> (parseOK  : a -> State str -> m r)
             -> (emptyOK  : a -> State str -> m r)
             -> (parseErr : List (Error str) -> State str -> m r)
@@ -58,11 +65,14 @@ record ParserT (str : Type) (m : Type -> Type) a where
             -> m r
 
 
-execParserT : Monad m
+public export
+execParserT : {0 str : Type}
+           -> {0 a : Type}
+           -> Monad m
            => (parser : ParserT str m a)
            -> (input  : State str)
            -> m (Reply str a)
-execParserT {str} {m} {a} (PT p) input =
+execParserT (PT p) input =
     p (Reply str a) success success failure failure input
    where
      success : a -> State str -> m (Reply str a)
@@ -72,9 +82,11 @@ execParserT {str} {m} {a} (PT p) input =
      failure es x = pure $ MkReply x $ Failure es
 
 
+public export
 Monad m => Functor (ParserT str m) where
   map {a} {b} f (PT p) = PT $ \r, us, cs => p r (us . f) (cs . f)
 
+public export
 Monad m => Applicative (ParserT str m) where
   pure x = PT (\r, us, cs, ue, ce => us x)
 
@@ -88,6 +100,7 @@ infixl 2 <*>|
 ||| A variant of <*>, lazy in its second argument, which must NOT be
 ||| pattern-matched right away because we want to keep it lazy in case
 ||| it's not used.
+public export
 (<*>|) : Monad m => ParserT str m (a -> b)
                  -> Lazy (ParserT str m a)
                  -> ParserT str m b
@@ -96,6 +109,7 @@ infixl 2 <*>|
         (\f' => let PT g = x in g r (cs . f') (cs . f') ce ce)
         ue ce
 
+public export
 Monad m => Monad (ParserT str m) where
   (>>=) (PT x) f =
       PT (\r, us, cs, ue, ce
@@ -103,17 +117,21 @@ Monad m => Monad (ParserT str m) where
                    (\x' => let PT y = f x' in y r cs cs ce ce)
                    ue ce)
 
+public export
 MonadTrans (ParserT str) where
   lift x = PT (\r, us, cs, ue, ce, s => (x >>= flip us s))
 
+public export
 MonadState s m => MonadState s (ParserT str m) where
   get = lift get
   put = lift . put
 
 ||| Fail with some error message
+public export
 fail : String -> ParserT str m a
 fail msg = PT $ \r, us, cs, ue, ce, (ST i p tw) => ue [Err p msg] (ST i p tw)
 
+public export
 Monad m => Alternative (ParserT str m) where
   empty = fail "non-empty alternative"
 
@@ -123,13 +141,14 @@ Monad m => Alternative (ParserT str m) where
                                                   (ce . (err ++)) st) ce st
 
 
+public export
 lightyearAlt' : Monad m
              => (left  : ParserT str m a)
-             -> (right : Lazy $ ParserT str m a)
+             -> (right : Lazy (ParserT str m a))
              -> ParserT str m a
 lightyearAlt' (PT left) right = PT leftright
   where
-    leftright : (r : Type)
+    leftright : (0 r : Type)
              -> (parseOK  : a -> State str -> m r)
              -> (emptyOK  : a -> State str -> m r)
              -> (parseErr : List (Error str) -> State str -> m r)
@@ -147,6 +166,7 @@ infixl 3 <|>|
 ||| A variant of <|>, lazy in its second argument, which must NOT be
 ||| pattern-matched right away because we want to keep it lazy in case
 ||| it's not used.
+public export
 (<|>|) : Monad m => ParserT str m a
                  -> Lazy (ParserT str m a)
                  -> ParserT str m a
@@ -155,12 +175,14 @@ infixl 3 <|>|
 
 infixl 0 <?>
 ||| Associate an error with parse failure
+public export
 (<?>) : Monad m => ParserT str m a -> String -> ParserT str m a
 (<?>) (PT f) msg = PT $ \r, us, cs, ue, ce, (ST i pos tw)
     => f r us cs (ue . ((Err pos msg)::))
                  (ce . ((Err pos msg)::)) (ST i pos tw)
 
 ||| Commit to a parse alternative and prevent backtracking
+public export
 commitTo : Monad m => ParserT str m a -> ParserT str m a
 commitTo (PT f) = PT $ \r, us, cs, ue, ce => f r cs cs ce ce
 
@@ -175,17 +197,20 @@ commitTo (PT f) = PT $ \r, us, cs, ue, ce => f r cs cs ce ce
 --
 -- We make "str" the determining type because it's usually fixed
 -- by the parser monad you're working in, which helps resolution.
+public export
 interface Stream tok str | str where
   uncons : str -> Maybe (tok, str)
 
   updatePos : Nat -> Position -> tok -> Pair Position Position
 
 
+public export
 initialState : Maybe String -> s -> Nat -> State s
 initialState name s tw = ST s (defaultPos name) tw
 
 ||| Matches a single element that satisfies some condition, accepting
 ||| a transformation of successes.
+public export
 satisfyMaybe : (Monad m, Stream tok str)
             => (tok -> Maybe out)
             -> ParserT str m out
@@ -199,6 +224,7 @@ satisfyMaybe {tok=tok} {str=str} f =
                       in us res (ST rest newPos tw)
 
 ||| Matches a single element that satisfies some condition.
+public export
 satisfy : (Monad m, Stream tok str)
                    => (tok -> Bool)
                    -> ParserT str m tok
@@ -208,8 +234,16 @@ satisfy p = satisfyMaybe (\t => if p t then Just t else Nothing)
 ||| Succeeds if and only if the argument parser fails.
 |||
 ||| In Parsec, this combinator is called `notFollowedBy`.
+public export
 requireFailure : ParserT str m tok -> ParserT str m ()
 requireFailure (PT f) = PT requireFailureHelper where
+    requireFailureHelper : (0 r : Type)
+                        -> (() -> State str -> m r)
+                        -> (() -> State str -> m r)
+                        -> (List (Error str) -> State str -> m r)
+                        -> (List (Error str) -> State str -> m r)
+                        -> State str
+                        -> m r
     requireFailureHelper r us cs ue ce ss@(ST i pos tw) =
         f r
             (\t, s => ue [Err pos "argument parser to fail"] s)
@@ -219,10 +253,12 @@ requireFailure (PT f) = PT requireFailureHelper where
             ss
 
 
+public export
 getState : ParserT str m (State str)
 getState = PT $ \r,us,cs,ue,ce,s => us s s
 
 ||| Return the current position of the parser in the input stream.
+public export
 getPosition : Monad m => ParserT str m Position
 getPosition = position <$> getState
 

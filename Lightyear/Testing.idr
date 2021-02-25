@@ -8,13 +8,16 @@
 -- --------------------------------------------------------------------- [ EOH ]
 module Lightyear.Testing
 
+import Data.String
+
 import Lightyear
 import Lightyear.Strings
 
-%access  export
+-- %access  export
 %default total
 
 ||| Simple data structure to store the result of a parsing test.
+export
 data TestReport : Type where
   Pass : (title : String) -> TestReport
 
@@ -47,6 +50,7 @@ data TestReport : Type where
 ||| @title    Name of the test.
 ||| @p        The parser to test.
 ||| @input    The input string to parse.
+export
 parseTest : Show a
          => (title    : String)
          -> (p        : Parser a)
@@ -62,6 +66,7 @@ parseTest title p input = do
 ||| @title    Name of the test.
 ||| @p        The parser to test.
 ||| @input    The input string to parse.
+export
 parseTestNot : Show a
             => (title    : String)
             -> (p        : Parser a)
@@ -81,6 +86,7 @@ parseTestNot title p input = do
 ||| @input    The input string to parse.
 ||| @expected The expected output from a successful parsing.
 ||| @eq       A comparison function.
+export
 parseTestCmp : Show a
             => (title    : String)
             -> (p        : Parser a)
@@ -101,6 +107,7 @@ parseTestCmp title p test input expected = do
 ||| @p        The parser to test.
 ||| @input    The input string to parse.
 ||| @expected The expected parsing error message.
+export
 parseTestCmpNot : Show a
                => (title    : String)
                -> (p        : Parser a)
@@ -121,6 +128,7 @@ parseTestCmpNot title p input expected = do
 ||| @p        The parser to test.
 ||| @input    The input string to parse.
 ||| @expected The expected output from a successful parsing.
+export
 parseTestCmpShow : Show a
                 => (title    : String)
                 -> (p        : Parser a)
@@ -160,10 +168,12 @@ showReport (AdvParseFailure title input expected report) =
 showReport (AdvResultFailure title input expected actual) =
     unlines $ head ++ footer
   where
+    head : List String
     head = [ unwords ["[FAIL]", "[RESULT]", title]
             , unwords ["\t", "Given input:"]
             , unwords ["\t\t", input]
            ]
+    footer : List String
     footer = [ unwords ["\t", "I made:"]
              , unwords ["\t\t", show actual]
              , unwords ["\t", "But was expected to make:"]
@@ -171,10 +181,12 @@ showReport (AdvResultFailure title input expected actual) =
              ]
 
 ||| Run an individual test.
+export
 runTest : TestReport -> IO ()
 runTest = (putStrLn . showReport)
 
 ||| Run a sequence of tests.
+export
 runTests : List TestReport -> IO ()
 runTests = traverse_ runTest
 

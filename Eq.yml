@@ -1,0 +1,8 @@
+package: lightyear
+version: 1.0.0
+
+# depends:
+# - effects
+
+ignoredModules:
+- Lightyear.StringFile
