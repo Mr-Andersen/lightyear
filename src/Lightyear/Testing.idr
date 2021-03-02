@@ -8,7 +8,7 @@
 -- --------------------------------------------------------------------- [ EOH ]
 module Lightyear.Testing
 
-import Data.String
+import Data.Strings
 
 import Lightyear
 import Lightyear.Strings

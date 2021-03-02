@@ -8,7 +8,7 @@
 module Lightyear.Position
 
 import Data.Nat
-import Data.String
+import Data.Strings
 
 %default total
 -- %access export

@@ -10,7 +10,7 @@ module Lightyear.Strings
 import        Data.List
 import public Data.Fin
 import public Data.Vect
-import        Data.String
+import        Data.Strings
 
 import public Control.Monad.Identity
 

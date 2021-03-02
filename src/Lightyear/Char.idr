@@ -9,7 +9,7 @@
 -- --------------------------------------------------------------------- [ EOH ]
 module Lightyear.Char
 
-import        Data.String
+import        Data.Strings
 import public Data.Vect
 import public Data.Fin
 
@@ -18,8 +18,8 @@ import public Control.Monad.Identity
 import Lightyear.Core
 import Lightyear.Combinators
 
--- %access export
-
+-- Maybe somehow return proof that returned Char is the one passed as arg?
+-- `char a <|> char b` should return `Either (c = a) (c = b)`
 ||| A parser that matches some particular character
 export
 char : (Monad m, Stream Char str) => Char -> ParserT str m Char
@@ -31,7 +31,7 @@ char c = satisfy (== c) <?> "character '" ++ singleton c ++ "'"
 |||
 |||   vowel  = oneOf "aeiou"
 export
-oneOf :  (Monad m, Stream Char str) => String -> ParserT str m Char
+oneOf : (Monad m, Stream Char str) => String -> ParserT str m Char
 oneOf cs = satisfy (\c => elem c $ unpack cs)
 
 ||| As the dual of 'oneOf', @noneOf cs@ succeeds if the current
@@ -47,12 +47,12 @@ noneOf cs = satisfy (\c => not $ elem c $ unpack cs)
 ||| Returns the parsed character.
 export
 space : (Monad m, Stream Char s) => ParserT s m Char
-space               = satisfy isSpace       <?> "space"
+space = satisfy isSpace <?> "space"
 
 ||| Skips /zero/ or more white space characters. See also 'skipMany'.
 export
 spaces : (Monad m, Stream Char s) => ParserT s m ()
-spaces              = skip (many Lightyear.Char.space)  <?> "white space"
+spaces = skip (many Lightyear.Char.space)  <?> "white space"
 
 ||| Parses a newline character (\'\\n\'). Returns a newline character.
 export
@@ -63,7 +63,7 @@ newline = char '\n' <?> "lf new-line"
 ||| Returns a newline character.
 export
 crlf : (Monad m, Stream Char s) => ParserT s m Char
-crlf                = char '\r' *> char '\n' <?> "crlf new-line"
+crlf = char '\r' *> char '\n' <?> "crlf new-line"
 
 ||| Parses a CRLF (see 'crlf') or LF (see 'newline') end-of-line.
 ||| Returns a newline character (\'\\n\').
@@ -76,19 +76,19 @@ endOfLine           = newline <|> crlf       <?> "new-line"
 ||| Parses a tab character (\'\\t\'). Returns a tab character.
 export
 tab : (Monad m, Stream Char s) => ParserT s m Char
-tab                 = char '\t'             <?> "tab"
+tab = char '\t'             <?> "tab"
 
 ||| Parses an upper case letter (a character between \'A\' and \'Z\').
 ||| Returns the parsed character.
 export
 upper : (Monad m, Stream Char s) => ParserT s m Char
-upper               = satisfy isUpper       <?> "uppercase letter"
+upper = satisfy isUpper       <?> "uppercase letter"
 
 ||| Parses a lower case character (a character between \'a\' and \'z\').
 ||| Returns the parsed character.
 export
 lower : (Monad m, Stream Char s) => ParserT s m Char
-lower               = satisfy isLower       <?> "lowercase letter"
+lower = satisfy isLower       <?> "lowercase letter"
 
 ||| Parses a letter or digit (a character between \'0\' and \'9\').
 ||| Returns the parsed character.
@@ -137,15 +137,15 @@ integer = do minus <- opt (char '-')
 ||| \'f\' or \'A\' and \'F\'). Returns the parsed character.
 export
 hexDigit : (Monad m, Stream Char s) => ParserT s m Char
-hexDigit            = satisfy isHexDigit    <?> "hexadecimal digit"
+hexDigit = satisfy isHexDigit <?> "hexadecimal digit"
 
 ||| Parses an octal digit (a character between \'0\' and \'7\'). Returns
 ||| the parsed character.
 export
 octDigit : (Monad m, Stream Char s) => ParserT s m Char
-octDigit            = satisfy isOctDigit    <?> "octal digit"
+octDigit = satisfy isOctDigit <?> "octal digit"
 
 ||| This parser succeeds for any character. Returns the parsed character.
 export
 anyChar : (Monad m, Stream Char s) => ParserT s m Char
-anyChar             = anyToken              <?> "any character"
+anyChar  = anyToken <?> "any character"
