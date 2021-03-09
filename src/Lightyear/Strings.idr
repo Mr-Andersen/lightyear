@@ -92,7 +92,7 @@ implementation Stream Char String where
 
 ||| A parser that matches a particular string
 export
-string : Monad m => String -> ParserT String m String
+string : (Monad m, Stream Char str) => String -> ParserT str m String
 string s = pack <$> (traverse char $ unpack s) <?> "string " ++ show s
 
 -- ------------------------------------------------------------------- [ Space ]

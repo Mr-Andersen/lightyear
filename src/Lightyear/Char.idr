@@ -20,6 +20,7 @@ import Lightyear.Combinators
 
 -- Maybe somehow return proof that returned Char is the one passed as arg?
 -- `char a <|> char b` should return `Either (c = a) (c = b)`
+-- char : (Monad m, Stream Char str) => (c : Char) -> Covers (Subset Char (Equal c)) t => ParserT str m t
 ||| A parser that matches some particular character
 export
 char : (Monad m, Stream Char str) => Char -> ParserT str m Char
